@@ -1,40 +1,62 @@
-use std::{env, process};
+use std::{fs};
+use std::io::{self, Write};
 
 fn main() {
-    let args: Vec<String> = env::args().collect();
 
-    if args.len() !=3 {
-        eprintln!("Error: Incorrect number of arguments.");
-        eprintln!("Usage: {}\"<text to encrypt>\" <shift amount>", args[0]);
+    let text_to_process = loop {
+        println!("\nHow would you like to provide the text?");
+        println!(" 1: Type text directly");
+        println!(" 2: Provide a file path");
+        let choice = get_user_input("Enter your choice (1 or 2): ");
 
-        process::exit(1)
-    }
-
-    let text_to_process = &args[1];
-
-    let shift_amount: i16 = match args[2].parse() {
-        Ok(num) => num,
-        Err(_) => {
-            eprintln!("Error: The shift amount must be a valid integer.");
-            eprintln!("Usage: {} \"<text to encrypt>\" <shift amount>", args[0]);
-            process::exit(1);
+        match choice.as_str() {
+            "1" => {
+                break get_user_input("Please enter the text to process: ");
+            }
+            "2" => {
+                let file_path = get_user_input("Please enter the path to the file: ");
+                match fs::read_to_string(&file_path) {
+                    Ok(contents) => break contents,
+                    Err(e) => {
+                        eprintln!("\nError: Failed to read file '{}'. Reason: {}", file_path, e);
+                    }
+                }
+            }
+            _ => {
+                eprintln!("\nError: Invalid choice. Please enter 1 or 2.");
+            }
         }
     };
+   
+   let shift_amount: i16 = loop {
+    let shift_str = get_user_input("\nEnter the shift amount (for ex: 3 for encrypt and -3 for decrypt): ");
+    match shift_str.parse() {
+        Ok(num) => break num,
+        Err(_) => {
+            eprintln!("\nError: Invalid shift amount. Please enter a valid integer.")
+        }
+    }
+   };
 
-    println!("--- CipherCraft v0.1: Caesar Cipher ---");
-    println!();
-    println!("Original Text:  {}", text_to_process);
-    println!("Shift Amount:   {}", shift_amount);
-    println!("-----------------------------------------");
+    println!("\n-------------------------------------------------");
+    println!("Original Text Length: {} characters", text_to_process.len());
+    println!("Shift Amount:         {}", shift_amount);
+    println!("-------------------------------------------------");
 
-    // --- Encryption ---
-    let encrypted_text = caesar_cipher(text_to_process, shift_amount);
-    println!("Encrypted Text: {}", encrypted_text);
+    // --- 3. Process the text and print the result ---
+    let processed_text = caesar_cipher(&text_to_process, shift_amount);
+    println!("\nProcessed Text:\n");
+    println!("{}", processed_text);
 
-    // --- Decryption ---
-    // Decryption is just encryption with a negative shift.
-    let decrypted_text = caesar_cipher(&encrypted_text, -shift_amount);
-    println!("Decrypted Text: {}", decrypted_text);
+}
+
+fn get_user_input(prompt: &str) -> String {
+    print!("{}", prompt);
+    io::stdout().flush().unwrap();
+
+    let mut input = String::new();
+    io::stdin().read_line(&mut input).unwrap();
+    input.trim().to_string()
 }
 
 fn caesar_cipher(text:&str, shift:i16) -> String {
