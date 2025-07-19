@@ -1,17 +1,64 @@
 use std::{fs};
 use std::io::{self, Write};
 
+enum Cipher {
+    Caesar(i16),
+    Vigenere { keyword: String, decrypt: bool}
+}
+
+impl Cipher {
+    fn process(&self, text: &str) -> String {
+        match self {
+            Cipher::Caesar(shift) => {
+                println!("\nProcessing with Caesar Cipher (shift: {})...", shift);
+                caesar_cipher(text, *shift)
+            }
+            Cipher::Vigenere { keyword,decrypt } => {
+                let mode_str = if *decrypt {"decrypt"} else {"encrypt"};
+                println!("\nProcessing with Vigenère cipher (keyword: '{}', mode: {})...", keyword, mode_str);
+                vigenere_cipher(text, keyword, *decrypt)
+            }
+        }
+    }
+}
+
 fn main() {
 
-    let cipher_choice = loop {
+    let chosen_cipher = loop {
         println!("\nPlease choose a cipher: ");
         println!(" 1. Caesar Cipher (Shift by number)");
         println!(" 2. Vigenere Cipher (Shift by keyword)");
         let choice = get_user_input("Enter your choice (1 or 2): ");
-        if choice == "1" || choice == "2" {
-            break choice;
+
+        match choice.as_str() {
+            "1" => {
+                let shift_amount: i16 = loop {
+                    let shift_str = get_user_input("\nEnter the Caesar shift amount (e.g., 3 or -3): ");
+                    match shift_str.parse() {
+                        Ok(num) => break num,
+                        Err(_) => eprintln!("\nError: Invalid shift amount. Please enter a valid integer."),
+                    }
+                };
+                break Cipher::Caesar(shift_amount);
+            }
+            "2" => {
+                let keyword = loop {
+                    let key = get_user_input("\nEnter the Vigenere keyword: ");
+                    if key.chars().any(|c| c.is_alphabetic()) {
+                        break key;
+                    }
+                    eprintln!("\nError: Keyword must contain at least one alphabetic character.");
+                };
+                let decrypt = loop {
+                    let mode = get_user_input("Encrypt or Decrypt? (e/d): ").to_lowercase();
+                    if mode == "e" { break false; }
+                    if mode == "d" { break true; }
+                    eprintln!("\nError: Invalid mode. Please enter 'e' or 'd'.");
+                };
+                break Cipher::Vigenere { keyword, decrypt }
+            }
+            _ => eprintln!("\nError: Invalid choice. Please enter 1 or 2."),
         }
-        eprintln!("\nError: Invalid choice. Please enter 1 or 2. ")
     };
 
     let text_to_process = loop {
@@ -39,37 +86,7 @@ fn main() {
         }
     };
 
-    let processed_text = if cipher_choice == "1" {
-
-        let shift_amount: i16 = loop {
-            let shift_str = get_user_input("\nEnter the shift amount (for ex: 3 for encrypt and -3 for decrypt): ");
-            match shift_str.parse() {
-                Ok(num) => break num,
-                Err(_) => {
-                    eprintln!("\nError: Invalid shift amount. Please enter a valid integer.")
-                }
-            }
-        };
-        println!("\nProcessing with Caesar cipher (shift: {})...", shift_amount);
-        caesar_cipher(&text_to_process, shift_amount)
-    } else {
-        let keyword = loop {
-            let key = get_user_input("\nEnter the Vigenere keyword: ");
-            if key.chars().any(|c| c.is_alphabetic()) {
-                break key;
-            }
-            eprintln!("\nError: Keyword must contain at least one alphabetic character.")
-        };
-        let decrypt = loop {
-            let mode = get_user_input("Encrypt or Decrypt? (e/d): ").to_lowercase();
-            if mode == "e" { break false; }
-            if mode == "d" { break true; }
-            eprintln!("\nError: Invalid mode. Please enter 'e' or 'd'.");
-        };
-        let mode_str = if decrypt { "decrypt" } else { "encrypt" };
-        println!("\nProcessing with Vigenere cipher (keyword: '{}', mode: {})...", keyword, mode_str);
-        vigenere_cipher(&text_to_process, &keyword, decrypt)
-    };
+    let processed_text = chosen_cipher.process(&text_to_process);
     println!("\n-------------------------------------------------");
     println!("\nResult:\n");
     println!("{}", processed_text);
@@ -130,3 +147,4 @@ fn vigenere_cipher(text: &str, keyword: &str, decrypt: bool) -> String {
         })
         .collect()
 }
+
