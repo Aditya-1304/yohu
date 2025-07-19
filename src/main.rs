@@ -1,6 +1,6 @@
 use std::{fs};
 use std::io::{self, Write};
-use std::collections::HashMap;
+// use std::collections::HashMap;
 
 enum Cipher {
     Caesar(i16),
@@ -36,7 +36,9 @@ fn main() {
         println!("\nPlease choose a cipher: ");
         println!(" 1. Caesar Cipher (Shift by number)");
         println!(" 2. Vigenere Cipher (Shift by keyword)");
-        println!("  3: Crack Caesar Cipher (auto-decrypt)");
+        println!("-------------------------------------------------");
+        println!(" Yohu also provides a method to crack Caesar Cipher");
+        println!("\n 3: Crack Caesar Cipher (auto-decrypt)");
         let choice = get_user_input("Enter your choice (1, 2, or 3): ");
         match choice.as_str() {
             "1" => {
@@ -101,6 +103,32 @@ fn main() {
     println!("\n-------------------------------------------------");
     println!("\nResult:\n");
     println!("{}", processed_text);
+    println!("\n-------------------------------------------------");
+
+    loop {
+        let save_choice = get_user_input("\nSave result to a file? (y/n): ").to_lowercase();
+        match save_choice.as_str() {
+            "y" | "yes" => {
+                let filename = get_user_input("Enter filename to save as: ");
+                match fs::write(&filename, &processed_text) {
+                    Ok(_) => {
+                        println!("Successfully saved to '{}'.", filename);
+                        break;
+                    }
+                    Err(e) => {
+                        eprintln!("Error: Failed to save file. Reason: {}",e);
+                    }
+                }
+            }
+            "n" | "no" => {
+                println!("Exiting.");
+                break;
+            }
+            _ => {
+                eprintln!("Invalid input. Please enter 'y' or 'n'.");
+            }
+        }
+    }
 
 }
 
