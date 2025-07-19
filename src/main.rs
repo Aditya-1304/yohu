@@ -68,7 +68,7 @@ fn main() {
         println!(" 3. AES-128 (Modern Encryption)");
         println!("-------------------------------------------------");
         println!("Yohu also provide a method to crack Ceaser Cipher");
-        println!("\n 4. Crack Caesar Cipher (auto-decrypt)");
+        println!(" 4. Crack Caesar Cipher (auto-decrypt)\n");
         let choice = get_user_input("Enter your choice (1, 2, 3, or 4): ");
         match choice.as_str() {
             "1" => {
