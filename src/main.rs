@@ -1,9 +1,11 @@
 use std::{fs};
 use std::io::{self, Write};
+use std::collections::HashMap;
 
 enum Cipher {
     Caesar(i16),
-    Vigenere { keyword: String, decrypt: bool}
+    Vigenere { keyword: String, decrypt: bool},
+    CrackCaesar,
 }
 
 impl Cipher {
@@ -18,6 +20,12 @@ impl Cipher {
                 println!("\nProcessing with Vigenère cipher (keyword: '{}', mode: {})...", keyword, mode_str);
                 vigenere_cipher(text, keyword, *decrypt)
             }
+            Cipher::CrackCaesar => {
+                println!("\nAttempting to crack Caesar cipher using frequency analysis...");
+                let (decrypted_text, guessed_shift) = crack_caesar(text);
+                println!("Guessed shift key was: {}", guessed_shift);
+                decrypted_text
+            }
         }
     }
 }
@@ -28,8 +36,8 @@ fn main() {
         println!("\nPlease choose a cipher: ");
         println!(" 1. Caesar Cipher (Shift by number)");
         println!(" 2. Vigenere Cipher (Shift by keyword)");
-        let choice = get_user_input("Enter your choice (1 or 2): ");
-
+        println!("  3: Crack Caesar Cipher (auto-decrypt)");
+        let choice = get_user_input("Enter your choice (1, 2, or 3): ");
         match choice.as_str() {
             "1" => {
                 let shift_amount: i16 = loop {
@@ -57,7 +65,10 @@ fn main() {
                 };
                 break Cipher::Vigenere { keyword, decrypt }
             }
-            _ => eprintln!("\nError: Invalid choice. Please enter 1 or 2."),
+            "3" => {
+                break Cipher::CrackCaesar;
+            }
+            _ => eprintln!("\nError: Invalid choice. Please enter 1, 2 or 3."),
         }
     };
 
@@ -148,3 +159,29 @@ fn vigenere_cipher(text: &str, keyword: &str, decrypt: bool) -> String {
         .collect()
 }
 
+
+fn crack_caesar(text: &str) -> (String, i16) {
+    let mut frequencies = HashMap::new();
+
+    for c in text.chars().filter(|c| c.is_alphabetic()) {
+        *frequencies.entry(c.to_ascii_lowercase()).or_insert(0) += 1;
+    }
+
+    let most_frequent_char = frequencies
+        .into_iter()
+        .max_by_key(|&(_, count)| count)
+        .map(|(c,_)| c)
+        .unwrap_or('e');
+
+    let assumed_e = 'e' as i16;
+
+    let most_frequent_code = most_frequent_char as i16;
+
+    let guessed_shift = (most_frequent_code - assumed_e).rem_euclid(26);
+
+    let decrypt_shift = -guessed_shift;
+
+    let decrypted_text = caesar_cipher(text, decrypt_shift);
+
+    (decrypted_text, guessed_shift)
+}
