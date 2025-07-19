@@ -60,6 +60,8 @@ impl Cipher {
 
 fn main() {
     let chosen_cipher = loop {
+        println!("-------------------------------------------------");
+        println!(" Welcome to Yohu. ");
         println!("\nPlease choose a cipher: ");
         println!(" 1. Caesar Cipher (Shift by number)");
         println!(" 2. Vigenere Cipher (Shift by keyword)");

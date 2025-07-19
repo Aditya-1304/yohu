@@ -2,9 +2,22 @@
 name = "yohu"
 version = "0.1.0"
 edition = "2024"
+authors = ["Aditya Mandal <your-email@example.com>"]
+description = "A versatile command-line cryptography tool implementing multiple cipher algorithms for educational and practical use"
+license = "MIT"
+repository = "https://github.com/Aditya-1304/yohu"
+homepage = "https://github.com/Aditya-1304/yohu"
+readme = "README.md"
+keywords = ["cryptography", "cipher", "encryption", "caesar", "vigenere", "aes"]
+categories = ["command-line-utilities", "cryptography", "algorithms"]
+
 
 [dependencies]
 aes = "0.8.4"
 hex = "0.4.3"
 cipher = { version = "0.4", features = ["block-padding"] }
 cbc = "0.1.2"
+
+[[bin]]
+name = "yohu"
+path = "src/main.rs"
