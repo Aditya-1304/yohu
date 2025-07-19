@@ -20,7 +20,7 @@ cargo install yohu
 
 ### From Source
 ```bash
-git clone <your-repository-url>
+git clone <https://github.com/Aditya-1304/yohu.git>
 cd yohu
 cargo build --release
 ```
