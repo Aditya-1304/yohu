@@ -161,27 +161,48 @@ fn vigenere_cipher(text: &str, keyword: &str, decrypt: bool) -> String {
 
 
 fn crack_caesar(text: &str) -> (String, i16) {
-    let mut frequencies = HashMap::new();
+    // Standard English letter frequencies (source: Wikipedia)
+    const ENGLISH_FREQS: [f64; 26] = [
+        0.08167, 0.01492, 0.02782, 0.04253, 0.12702, 0.02228, 0.02015, 
+        0.06094, 0.06966, 0.00153, 0.00772, 0.04025, 0.02406, 0.06749, 
+        0.07507, 0.01929, 0.00095, 0.05987, 0.06327, 0.09056, 0.02758, 
+        0.00978, 0.02360, 0.00150, 0.01974, 0.00074, 
+    ];
 
-    for c in text.chars().filter(|c| c.is_alphabetic()) {
-        *frequencies.entry(c.to_ascii_lowercase()).or_insert(0) += 1;
+    let mut best_guess = ("".to_string(), -1);
+
+    let mut min_score = f64::MAX;
+
+    let text_alphabetic_chars: Vec<char> = text
+        .chars()
+        .filter(|c| c.is_alphabetic())
+        .collect();
+    let total_chars = text_alphabetic_chars.len() as f64;
+    
+    if total_chars == 0.0 {
+        return (text.to_string(), 0); 
     }
+    
+    for shift_guess in 0..26 {
+        let decrypted_text = caesar_cipher(text, -shift_guess);
+        
+        let mut observed_counts = [0.0; 26];
+        for c in decrypted_text.chars().filter(|c| c.is_alphabetic()) {
+            let index = (c.to_ascii_lowercase() as u8 - b'a') as usize;
+            observed_counts[index] += 1.0;
+        }
+        
+        let mut current_score = 0.0;
+        for i in 0..26 {
+            let expected_count = ENGLISH_FREQS[i] * total_chars;
+            let difference = observed_counts[i] - expected_count;
+            current_score += difference * difference / expected_count;
+        }
 
-    let most_frequent_char = frequencies
-        .into_iter()
-        .max_by_key(|&(_, count)| count)
-        .map(|(c,_)| c)
-        .unwrap_or('e');
-
-    let assumed_e = 'e' as i16;
-
-    let most_frequent_code = most_frequent_char as i16;
-
-    let guessed_shift = (most_frequent_code - assumed_e).rem_euclid(26);
-
-    let decrypt_shift = -guessed_shift;
-
-    let decrypted_text = caesar_cipher(text, decrypt_shift);
-
-    (decrypted_text, guessed_shift)
+        if current_score < min_score {
+            min_score = current_score;
+            best_guess = (decrypted_text, shift_guess);
+        }
+    }
+    best_guess
 }
